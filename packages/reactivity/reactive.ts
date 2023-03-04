@@ -1,4 +1,4 @@
-import { isChange, isObject } from '../utils/index'
+import { isArray, isChange, isObject } from '../utils/index'
 import { track, trigger } from './effect'
 
 const proxyMap = new WeakMap()
@@ -15,10 +15,14 @@ export function reactive<T extends object>(target: T): T {
       return isObject(res) ? reactive(res as any) : res
     },
     set(target, key, value, receiver) {
-      const oldValue = (target as any)[key]
+      const oldValue = (target as any)[key],
+        oldLength = (target as any)['length']
       const res = Reflect.set(target, key, value, receiver)
       if (isChange(oldValue, value)) {
         trigger(target, key)
+      }
+      if (isArray(target) && isChange(oldLength, (target as any).length)) {
+        trigger(target, 'length')
       }
       return res
     },

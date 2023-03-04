@@ -1,11 +1,14 @@
-let actionEffect: null | Function = null
+let actionEffect: undefined | Function
+const effectStack: Function[] = []
 export function effect<T>(fn: () => T) {
   const effectFn = () => {
     try {
       actionEffect = fn
+      effectStack.push(actionEffect)
       fn()
     } finally {
-      actionEffect = null
+      effectStack.pop()
+      actionEffect = effectStack[effectStack.length - 1]
       return
     }
   }

@@ -9,3 +9,4 @@ export function isChange(oldValue: any, value: any) {
 export function isArray(target: any) {
   return Array.isArray(target)
 }
+

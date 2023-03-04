@@ -1,10 +1,11 @@
 import { reactive } from '../packages/reactivity/reactive'
 import { effect } from '../packages/reactivity/effect'
+import { ref } from '../packages/reactivity/ref'
+import { log } from 'console'
 
 declare global {
   interface Window {
-    a: any
-    observer: any
+    [index: string]: any
   }
 }
 
@@ -25,5 +26,10 @@ effect(() => {
   console.log('数组改变了', observer.arr[0])
 })
 
+const count1 = ref(1)
+effect(() => {
+  console.log('123    ', count1.value)
+})
 window.a = a
 window.observer = observer
+window.count1 = count1

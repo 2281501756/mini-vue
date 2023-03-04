@@ -1,0 +1,1 @@
+{"version":3,"file":"bunch.js","mappings":";;;;;;AAAa;AACb","sources":["webpack://mini-vue/./src/index.ts"],"sourcesContent":["\"use strict\";\r\nconsole.log(123);\r\n"],"names":[],"sourceRoot":""}

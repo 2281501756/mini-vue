@@ -1,18 +1,26 @@
 let actionEffect: undefined | Function
 const effectStack: Function[] = []
-export function effect<T>(fn: () => T) {
+export function effect<T>(
+  fn: () => T,
+  option?: {
+    lazy?: boolean
+    scheduler?: Function
+  }
+) {
   const effectFn = () => {
     try {
-      actionEffect = fn
+      actionEffect = effectFn
       effectStack.push(actionEffect)
-      fn()
+      return fn()
     } finally {
       effectStack.pop()
       actionEffect = effectStack[effectStack.length - 1]
-      return
     }
   }
-  effectFn()
+  if (!option?.lazy) {
+    effectFn()
+  }
+  effectFn.scheduler = option?.scheduler
   return effectFn
 }
 
@@ -32,6 +40,10 @@ export function trigger(target: any, key: string | Symbol) {
   let dep = deps.get(key)
   if (!dep) return
   dep.forEach((effectFn) => {
-    effectFn()
+    if (effectFn.scheduler) {
+      effectFn.scheduler(effectFn)
+    } else {
+      effectFn()
+    }
   })
 }

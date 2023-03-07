@@ -1,7 +1,9 @@
 export function isObject(obj: any) {
   return typeof obj === 'object' && obj !== null
 }
-
+export function isBoolean(obj: any) {
+  return typeof obj === 'boolean'
+}
 export function isFunction(obj: any) {
   return typeof obj === 'function'
 }

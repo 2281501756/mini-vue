@@ -1,40 +1,16 @@
-import { reactive } from '../packages/reactivity/reactive'
-import { effect } from '../packages/reactivity/effect'
-import { ref } from '../packages/reactivity/ref'
-import { computer } from '../packages/reactivity/computer'
+import { h, render, Text, Fragment } from '../packages/runtime'
 
-declare global {
-  interface Window {
-    [index: string]: any
-  }
-}
+const vnode = h(
+  'div',
+  {
+    class: 'a b',
+    style: {
+      backgroundColor: 'red',
+      width: '100px',
+      height: '100px',
+    },
+  },
+  [h('ul', null, [h('li', null, 1), h('li', null, 2), h('li', null, 3), h('li', null, 4)])]
+)
 
-let a = reactive({
-  value: 1,
-})
-effect(() => {
-  console.log('我是effect中的  a:', a.value)
-})
-
-let observer = reactive({
-  arr: [1, 2, 3],
-})
-effect(() => {
-  console.log('observer length  ' + observer.arr.length)
-})
-effect(() => {
-  console.log('数组改变了', observer.arr[0])
-})
-
-const count1 = ref(1)
-effect(() => {
-  console.log('123    ', count1.value)
-})
-const count = computer(() => {
-  console.log('我计算了')
-  return count1.value * 2
-})
-window.a = a
-window.observer = observer
-window.count1 = count1
-window.count = count
+render(vnode, document.getElementById('app') as HTMLElement)

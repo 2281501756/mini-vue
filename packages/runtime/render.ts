@@ -143,31 +143,92 @@ function patchUnkeyedChildren(c1: any[], c2: any[], container: containerType, an
 }
 
 function patchKeyedChilren(c1: any[], c2: any[], container: containerType, anchor: HTMLElement) {
-  let maxNewIndexSoFar = 0
-  const map = new Map()
-  c1.forEach((prev, j) => {
-    map.set(prev.key, { prev, j })
-  })
-  for (let i = 0; i < c2.length; i++) {
-    const next = c2[i]
-    const curAnchor = i === 0 ? c1[0].el : c2[i - 1].el.nextSibling
-    if (map.has(next.key)) {
-      const { prev, j } = map.get(next.key)
-      patch(prev, next, container, anchor)
-      if (j < prev) {
-        container.insertBefore(next.el, curAnchor)
+  let i = 0,
+    e1 = c1.length - 1,
+    e2 = c2.length - 1
+  // 1从左至右依次对比
+  while (i <= e1 && i <= e2 && c1[i].key === c2[i].key) {
+    patch(c1[i], c2[i], container, anchor)
+    i++
+  }
+  // 2从右至左依次对比
+  while (i <= e1 && i <= e2 && c1[e1].key === c2[e2].key) {
+    patch(c1[e1], c2[e2], container, anchor)
+    e1--
+    e2--
+  }
+  if (i > e1) {
+    // 3 只剩下新的没有挂载的节点
+    const nextPos = e2 + 1
+    const curAnchor = (c2[nextPos] && c2[nextPos].el) || anchor
+    for (let j = i; j <= e2; j++) {
+      patch(null, c2[j], container, curAnchor)
+    }
+  } else if (i > e2) {
+    // 4 只剩下之前的没有卸载
+    for (let j = i; j <= e1; j++) {
+      unmount(c1[j])
+    }
+  } else {
+    // 5 采用传统的diff方法去遍历只是对需要移动和删除的进行标签
+    const map = new Map()
+    for (let j = i; j <= e1; j++) {
+      const prev = c1[j]
+      map.set(c1[j].key, { prev, j })
+    }
+    let maxNewIndexSoFar = 0,
+      move = false
+    const source = new Array(e2 - i + 1).fill(-1),
+      toMounted = []
+    for (let k = i; k <= e2; k++) {
+      const next = c2[k]
+      if (map.has(next.key)) {
+        const { prev, j } = map.get(next.key)
+        patch(prev, next, container, anchor)
+        if (j < prev) {
+          move = true
+        } else {
+          maxNewIndexSoFar = j
+        }
+        source[k - i] = j
+        map.delete(next.key)
       } else {
-        maxNewIndexSoFar = j
+        toMounted.push(k)
       }
-      map.delete(next.key)
-    } else {
-      patch(null, next, container, curAnchor)
+    }
+    map.forEach(({ prev }) => {
+      unmount(prev)
+    })
+    // 和最长递增子序列进行对比 进行移动 添加
+    if (move) {
+      const seq = getSequence(source)
+      let j = seq.length - 1
+      for (let k = source.length - 1; k >= 0; k--) {
+        if (seq[j] == k) {
+          j--
+        } else {
+          const pos = k + i
+          const nextPos = pos + 1
+          const curAnchor = (c2[nextPos] && c2[nextPos].el) || anchor
+          if (source[k] === -1) {
+            patch(null, c2[pos], container, curAnchor)
+          } else {
+            container.insertBefore(c2[pos].el, curAnchor)
+          }
+        }
+      }
+    } else if (toMounted.length) {
+      for (let k = toMounted.length - 1; k >= 0; k--) {
+        const pos = toMounted[k]
+        const nextPos = pos + 1
+        const curAnchor = (c2[nextPos] && c2[nextPos].el) || anchor
+        patch(null, c2[pos], container, curAnchor)
+      }
     }
   }
-  map.forEach(({ prev }) => {
-    unmount(prev)
-  })
 }
+function getSequence(s: number[]): number[] {}
+
 // 挂载类函数
 function mountElement(vode: VNode, container: containerType, anchor: HTMLElement) {
   const { type, props, shapeFlag, children } = vode
@@ -217,3 +278,31 @@ function unmountChildren(children: any) {
     unmount(child)
   })
 }
+
+// 传统diff
+// function patchKeyedChilren(c1: any[], c2: any[], container: containerType, anchor: HTMLElement) {
+//    let maxNewIndexSoFar = 0
+//   const map = new Map()
+//   c1.forEach((prev, j) => {
+//     map.set(prev.key, { prev, j })
+//   })
+//   for (let i = 0; i < c2.length; i++) {
+//     const next = c2[i]
+//     const curAnchor = i === 0 ? c1[0].el : c2[i - 1].el.nextSibling
+//     if (map.has(next.key)) {
+//       const { prev, j } = map.get(next.key)
+//       patch(prev, next, container, anchor)
+//       if (j < prev) {
+//         container.insertBefore(next.el, curAnchor)
+//       } else {
+//         maxNewIndexSoFar = j
+//       }
+//       map.delete(next.key)
+//     } else {
+//       patch(null, next, container, curAnchor)
+//     }
+//   }
+//   map.forEach(({ prev }) => {
+//     unmount(prev)
+//   })
+// }

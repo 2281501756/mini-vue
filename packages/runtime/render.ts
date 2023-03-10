@@ -6,7 +6,10 @@ type containerType = HTMLElement & {
   _vnode?: VNode | null
 }
 
-export function render(vode: VNode, container: containerType) {
+export function render(vode: VNode, container: containerType | null) {
+  if (!container) {
+    throw new Error('挂载节点不能为空')
+  }
   const prevVNode = container._vnode || null
   if (!vode) {
     if (prevVNode) {
@@ -26,6 +29,7 @@ function patch(n1: VNode | null, n2: VNode, container: containerType, anchor?: H
   }
   if (!anchor) anchor = n2.el?.nextSibling as HTMLElement
   const { shapeFlag } = n2
+  console.log(anchor)
   if (shapeFlag & ShapeFlags.COMPONENT) {
     processComponent(n1, n2, container, anchor)
   } else if (shapeFlag & ShapeFlags.TEXT) {
@@ -64,7 +68,7 @@ function processFragment(
     n1?.anchor ? n1.anchor : document.createTextNode('')
   ) as HTMLElement)
   if (n1) {
-    patchChildren(n1, n2, container, anchor)
+    patchChildren(n1, n2, container, fragmentEndAnchor)
   } else {
     container.insertBefore(fragmentStartAnchor, anchor)
     container.insertBefore(fragmentEndAnchor, anchor)
@@ -107,7 +111,11 @@ function patchChildren(n1: VNode, n2: VNode, container: containerType, anchor: H
       container.textContent = ''
       mountChildren(children, container, anchor)
     } else if (prevShapeFlag & ShapeFlags.ARRAY_CHILDREN) {
-      patchArrayChilren(prevChildren, children, container, anchor)
+      if (prevChildren[0] && prevChildren[0].key && children[0] && children[0].key) {
+        patchKeyedChilren(prevChildren, children, container, anchor)
+      } else {
+        patchUnkeyedChildren(prevChildren, children, container, anchor)
+      }
     } else {
       mountChildren(children, container, anchor)
     }
@@ -119,7 +127,7 @@ function patchChildren(n1: VNode, n2: VNode, container: containerType, anchor: H
     }
   }
 }
-function patchArrayChilren(c1: any[], c2: any[], container: containerType, anchor: HTMLElement) {
+function patchUnkeyedChildren(c1: any[], c2: any[], container: containerType, anchor: HTMLElement) {
   const oldLength = c1.length
   const newLength = c2.length
   const comenLength = Math.min(oldLength, newLength)
@@ -134,11 +142,37 @@ function patchArrayChilren(c1: any[], c2: any[], container: containerType, ancho
   }
 }
 
+function patchKeyedChilren(c1: any[], c2: any[], container: containerType, anchor: HTMLElement) {
+  let maxNewIndexSoFar = 0
+  const map = new Map()
+  c1.forEach((prev, j) => {
+    map.set(prev.key, { prev, j })
+  })
+  for (let i = 0; i < c2.length; i++) {
+    const next = c2[i]
+    const curAnchor = i === 0 ? c1[0].el : c2[i - 1].el.nextSibling
+    if (map.has(next.key)) {
+      const { prev, j } = map.get(next.key)
+      patch(prev, next, container, anchor)
+      if (j < prev) {
+        container.insertBefore(next.el, curAnchor)
+      } else {
+        maxNewIndexSoFar = j
+      }
+      map.delete(next.key)
+    } else {
+      patch(null, next, container, curAnchor)
+    }
+  }
+  map.forEach(({ prev }) => {
+    unmount(prev)
+  })
+}
 // 挂载类函数
 function mountElement(vode: VNode, container: containerType, anchor: HTMLElement) {
   const { type, props, shapeFlag, children } = vode
   const el: containerType = document.createElement(type)
-  patchProps(null, props, container)
+  patchProps(null, props, el)
   if (shapeFlag & ShapeFlags.TEXT_CHILDREN) {
     el.textContent = children
   } else if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {

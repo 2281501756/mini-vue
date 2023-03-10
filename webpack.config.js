@@ -1,5 +1,5 @@
-import htmlWebpackPlugin from 'html-webpack-plugin'
 import path from 'node:path'
+import htmlWebpackPlugin from 'html-webpack-plugin'
 import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
 
@@ -35,6 +35,9 @@ const config = {
       template: './public/index.html',
     }),
   ],
+  /**
+   * @type { import('webpack-dev-server').Configuration}
+   */
   devServer: {},
 }
 

@@ -1,15 +1,24 @@
 import { h, render, Text, Fragment } from '../packages/runtime'
 
-const vnode = h('ul', null, [h('li', null, 'first'), h(Fragment, null, []), h('li', null, 'last')])
+const vnode = h('ul', null, [
+  h('li', { key: 1 }, '1'),
+  h('li', { key: 2 }, '2'),
+  h('li', { key: 3 }, '3'),
+  h('li', { key: 4 }, '4'),
+  h('li', { key: 5 }, '5'),
+])
 
 render(vnode, document.getElementById('app') as HTMLElement)
 
 setTimeout(() => {
   const vnode1 = h('ul', null, [
-    h('li', null, 'first1231231'),
-    h(Fragment, null, [h('li', null, 'add')]),
-    h('li', null, 'last'),
+    h('li', { key: 2 }, '2'),
+    h('li', { key: 3 }, '3'),
+    h('li', { key: 1 }, '1'),
+    h('li', { key: 4 }, '4'),
+    h('li', { key: 5 }, '5'),
   ])
+
   render(vnode1, document.getElementById('app') as HTMLElement)
 }, 1000)
 

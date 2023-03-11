@@ -29,7 +29,6 @@ function patch(n1: VNode | null, n2: VNode, container: containerType, anchor?: H
   }
   if (!anchor) anchor = n2.el?.nextSibling as HTMLElement
   const { shapeFlag } = n2
-  console.log(anchor)
   if (shapeFlag & ShapeFlags.COMPONENT) {
     processComponent(n1, n2, container, anchor)
   } else if (shapeFlag & ShapeFlags.TEXT) {
@@ -185,7 +184,7 @@ function patchKeyedChilren(c1: any[], c2: any[], container: containerType, ancho
       if (map.has(next.key)) {
         const { prev, j } = map.get(next.key)
         patch(prev, next, container, anchor)
-        if (j < prev) {
+        if (j < maxNewIndexSoFar) {
           move = true
         } else {
           maxNewIndexSoFar = j
@@ -199,6 +198,7 @@ function patchKeyedChilren(c1: any[], c2: any[], container: containerType, ancho
     map.forEach(({ prev }) => {
       unmount(prev)
     })
+    console.log(move)
     // 和最长递增子序列进行对比 进行移动 添加
     if (move) {
       const seq = getSequence(source)
@@ -227,7 +227,45 @@ function patchKeyedChilren(c1: any[], c2: any[], container: containerType, ancho
     }
   }
 }
-function getSequence(s: number[]): number[] {}
+// 最长公共子序列算法
+function getSequence(nums: number[]): number[] {
+  const result = []
+  const position = []
+  for (let i = 0; i < nums.length; i++) {
+    if (nums[i] === -1) {
+      continue
+    }
+    // result[result.length - 1]可能为undefined，此时nums[i] > undefined为false
+    if (nums[i] > result[result.length - 1]) {
+      result.push(nums[i])
+      position.push(result.length - 1)
+    } else {
+      let l = 0,
+        r = result.length - 1
+      while (l <= r) {
+        const mid = ~~((l + r) / 2)
+        if (nums[i] > result[mid]) {
+          l = mid + 1
+        } else if (nums[i] < result[mid]) {
+          r = mid - 1
+        } else {
+          l = mid
+          break
+        }
+      }
+      result[l] = nums[i]
+      position.push(l)
+    }
+  }
+  let cur = result.length - 1
+  // 这里复用了result，它本身已经没用了
+  for (let i = position.length - 1; i >= 0 && cur >= 0; i--) {
+    if (position[i] === cur) {
+      result[cur--] = i
+    }
+  }
+  return result
+}
 
 // 挂载类函数
 function mountElement(vode: VNode, container: containerType, anchor: HTMLElement) {

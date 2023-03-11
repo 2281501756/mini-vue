@@ -8,6 +8,7 @@ export type VNode = {
   shapeFlag: number
   el: null | HTMLElement
   anchor: null | HTMLElement
+  key: any
 }
 
 export const Text = Symbol('Text')
@@ -58,6 +59,7 @@ export function h(type: any, props: any = null, children: any = null): VNode {
     shapeFlag,
     el: null,
     anchor: null,
+    key: props && (props.key != null ? props.key : null),
   }
 }
 export function isSameVNode(n1: VNode, n2: VNode) {

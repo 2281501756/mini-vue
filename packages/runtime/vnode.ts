@@ -1,8 +1,9 @@
-import { isObject, isString } from '../utils'
+import { isArray, isObject, isString } from '../utils'
 import { isReactive } from '../reactivity/reactive'
+import { Component } from './component'
 
 export type VNode = {
-  type: string
+  type: string | typeof Text | typeof Fragment | Component
   props: any
   children: any
   shapeFlag: number
@@ -64,4 +65,14 @@ export function h(type: any, props: any = null, children: any = null): VNode {
 }
 export function isSameVNode(n1: VNode, n2: VNode) {
   return n1.type === n2.type
+}
+
+export function normalizeVNode(vnode: VNode): VNode {
+  if (isArray(vnode)) {
+    return h(Fragment, null, vnode)
+  } else if (isObject(vnode)) {
+    return vnode
+  } else {
+    return h(Text, null, String(vnode))
+  }
 }

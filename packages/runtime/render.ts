@@ -1,8 +1,9 @@
 import { VNode, ShapeFlags } from './vnode'
 import { isSameVNode } from './vnode'
 import { patchProps } from './patchProps'
+import { mountComponent } from './component'
 
-type containerType = HTMLElement & {
+export type containerType = HTMLElement & {
   _vnode?: VNode | null
 }
 
@@ -21,7 +22,7 @@ export function render(vode: VNode, container: containerType | null) {
   container._vnode = vode
 }
 
-function patch(n1: VNode | null, n2: VNode, container: containerType, anchor?: HTMLElement) {
+export function patch(n1: VNode | null, n2: VNode, container: containerType, anchor?: HTMLElement) {
   if (n1 && !isSameVNode(n1, n2)) {
     unmount(n1)
     anchor = n1.anchor as HTMLElement
@@ -45,7 +46,12 @@ function processComponent(
   n2: VNode,
   container: containerType,
   anchor: HTMLElement
-) {}
+) {
+  if (n1) {
+  } else {
+    mountComponent(n2, container, anchor)
+  }
+}
 function processText(n1: VNode | null, n2: VNode, container: containerType, anchor: HTMLElement) {
   if (n1) {
     n2.el = n1.el
@@ -270,7 +276,7 @@ function getSequence(nums: number[]): number[] {
 // 挂载类函数
 function mountElement(vode: VNode, container: containerType, anchor: HTMLElement) {
   const { type, props, shapeFlag, children } = vode
-  const el: containerType = document.createElement(type)
+  const el: containerType = document.createElement(type as string)
   patchProps(null, props, el)
   if (shapeFlag & ShapeFlags.TEXT_CHILDREN) {
     el.textContent = children

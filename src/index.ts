@@ -1,4 +1,4 @@
-import { h, render, Text, Fragment } from '../packages/runtime'
+import { h, render, Text, Fragment, createApp } from '../packages/runtime'
 import { ref } from '../packages/reactivity'
 
 const com = {
@@ -6,6 +6,9 @@ const com = {
   setup() {
     const count = ref(0)
     const add = () => {
+      count.value++
+      count.value++
+      count.value++
       count.value++
     }
     const sub = () => {
@@ -26,5 +29,4 @@ const com = {
     ])
   },
 }
-
-render(h(com, { foo: 'foo', bar: 'bar' }), document.getElementById('app') as HTMLElement)
+createApp(com).mount(document.getElementById('app'))

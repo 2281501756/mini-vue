@@ -1,6 +1,7 @@
 import { effect } from '../reactivity'
 import { reactive } from '../reactivity/reactive'
 import { containerType, patch } from './render'
+import { queueJob } from './scheduler'
 import { normalizeVNode, VNode } from './vnode'
 
 type Data = Record<string, unknown>
@@ -70,30 +71,35 @@ export function mountComponent(vnode: VNode, container: containerType, anchor?: 
     ...instance.setupState,
   }
 
-  instance.update = effect(() => {
-    if (!instance.isMound) {
-      const subTree = (instance.subTree = normalizeVNode(VueInstance.render(instance.ctx)))
-      fallThrough(instance, subTree)
-      patch(null, subTree, container, anchor)
-      vnode.el = subTree.el
-      instance.isMound = true
-    } else {
-      if (instance.next) {
-        vnode = instance.next
-        instance.next = null
-        initProps(instance, vnode)
-        instance.ctx = {
-          ...instance.props,
-          ...instance.setupState,
+  instance.update = effect(
+    () => {
+      if (!instance.isMound) {
+        const subTree = (instance.subTree = normalizeVNode(VueInstance.render(instance.ctx)))
+        fallThrough(instance, subTree)
+        patch(null, subTree, container, anchor)
+        vnode.el = subTree.el
+        instance.isMound = true
+      } else {
+        if (instance.next) {
+          vnode = instance.next
+          instance.next = null
+          initProps(instance, vnode)
+          instance.ctx = {
+            ...instance.props,
+            ...instance.setupState,
+          }
         }
+        const prev = instance.subTree
+        const subTree = (instance.subTree = normalizeVNode(VueInstance.render(instance.ctx)))
+        fallThrough(instance, subTree)
+        patch(prev, subTree, container, anchor)
+        vnode.el = subTree.el
       }
-      const prev = instance.subTree
-      const subTree = (instance.subTree = normalizeVNode(VueInstance.render(instance.ctx)))
-      fallThrough(instance, subTree)
-      patch(prev, subTree, container, anchor)
-      vnode.el = subTree.el
+    },
+    {
+      scheduler: queueJob,
     }
-  })
+  )
 }
 export function updateComponent(n1: VNode, n2: VNode) {
   n2.component = n1.component

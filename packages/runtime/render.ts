@@ -1,7 +1,7 @@
 import { VNode, ShapeFlags } from './vnode'
 import { isSameVNode } from './vnode'
 import { patchProps } from './patchProps'
-import { mountComponent } from './component'
+import { mountComponent, updateComponent } from './component'
 
 export type containerType = HTMLElement & {
   _vnode?: VNode | null
@@ -48,6 +48,8 @@ function processComponent(
   anchor: HTMLElement
 ) {
   if (n1) {
+    console.log('n1存在')
+    updateComponent(n1, n2)
   } else {
     mountComponent(n2, container, anchor)
   }
@@ -307,7 +309,9 @@ function unmount(vnode: VNode) {
   }
 }
 
-function unmountComponent(vnode: VNode) {}
+function unmountComponent(vnode: VNode) {
+  unmount(vnode.component?.subTree)
+}
 function unmountFragment(vnode: VNode) {
   let { el: cur, anchor: end } = vnode
   while (cur !== end && cur && end) {

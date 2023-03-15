@@ -7,17 +7,22 @@ const com = {
     const count = ref(0)
     const add = () => {
       count.value++
-      console.log(count.value)
+    }
+    const sub = () => {
+      count.value--
     }
     return {
       count,
       add,
+      sub,
     }
   },
   render(ctx: any) {
-    return h('div', { style: { backgroundColor: 'red' }, id: ctx.bar }, [
+    console.log('render')
+    return h('div', null, [
       h('div', null, ctx.count.value),
       h('button', { onClick: ctx.add }, '+'),
+      h('button', { onClick: ctx.sub }, '-'),
     ])
   },
 }

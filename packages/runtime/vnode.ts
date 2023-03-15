@@ -1,6 +1,6 @@
 import { isArray, isObject, isString } from '../utils'
 import { isReactive } from '../reactivity/reactive'
-import { Component } from './component'
+import { Component, ComponentInstance } from './component'
 
 export type VNode = {
   type: string | typeof Text | typeof Fragment | Component
@@ -10,6 +10,7 @@ export type VNode = {
   el: null | HTMLElement
   anchor: null | HTMLElement
   key: any
+  component: ComponentInstance | null
 }
 
 export const Text = Symbol('Text')
@@ -61,6 +62,7 @@ export function h(type: any, props: any = null, children: any = null): VNode {
     el: null,
     anchor: null,
     key: props && (props.key != null ? props.key : null),
+    component: null,
   }
 }
 export function isSameVNode(n1: VNode, n2: VNode) {
